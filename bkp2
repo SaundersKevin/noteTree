@@ -1,0 +1,52 @@
+{-# LANGUAGE OverloadedStrings #-}
+
+import Control.Monad
+import qualified Graphics.UI.Threepenny as UI
+import Graphics.UI.Threepenny.Core
+import qualified CMark as MD
+import Data.Text
+import System.Environment (getArgs)
+import System.Directory (doesFileExist, getCurrentDirectory)
+import System.FilePath (takeExtension)
+
+main :: IO ()
+main = startGUI defaultConfig { jsPort = Just 8023 } (setup)
+
+setup :: Window -> UI ()
+setup window = do
+
+    -- Getting the path after the address using a little JS
+    filepath <- callFunction $ ffi "window.location.pathname"
+
+    let path = sanitizePath filepath
+
+    -- bunch of IO to find the file and to debug
+    -- debug
+    liftIO $ print path
+    liftIO $ getCurrentDirectory >>= print
+    liftIO $ print (isMarkdown path)
+
+    -- find if and what file
+    exists <- liftIO $ doesFileExist path
+    content <- if exists && (isMarkdown path)
+                  then liftIO $ readFile path
+                  else return $ "Broken Link"
+
+    -- title
+    return window # set title "NoteTree"
+
+    -- body and message. Parses markdown to html
+    let htmlContent = MD.commonmarkToHtml [] (pack content)
+
+    markdownDiv <- UI.div # set UI.html (unpack htmlContent)
+    _ <- getBody window #+ [element markdownDiv]
+    return ()
+
+-- Helper programs (move to custom header?)
+isMarkdown :: FilePath -> Bool
+isMarkdown path = let ext = takeExtension path in ext == ".md"
+
+sanitizePath :: FilePath -> FilePath
+sanitizePath ('/':path) = sanitizePath path
+sanitizePath ('.':path) = sanitizePath path
+sanitizePath path = path
