@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <title>Graph Drawing</title>
+  <style>
+    canvas {
+      border: 1px solid black;
+      display: block;
+      margin: auto;
+    }
+  </style>
+</head>
+<body>
+<canvas id="graphCanvas" width="600" height="600"></canvas>
+
+<script>
+  // Example nodes and edges
+  const nodes = [
+    { id: 0 }, { id: 1 }, { id: 2 }, { id: 3 }, { id: "TEsting" }
+  ];
+
+  const edges = [
+    [0,1], [1,2], [2,3], [3,4], [4,0], [0,2]
+  ];
+
+  const canvas = document.getElementById("graphCanvas");
+  const ctx = canvas.getContext("2d");
+
+  // --- Layout: circular placement ---
+  const radius = 200;
+  const centerX = canvas.width / 2;
+  const centerY = canvas.height / 2;
+
+  nodes.forEach((node, i) => {
+    const angle = (2 * Math.PI * i) / nodes.length;
+    node.x = centerX + radius * Math.cos(angle);
+    node.y = centerY + radius * Math.sin(angle);
+  });
+
+  // --- Drawing ---
+  function drawGraph() {
+    ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+    // Draw edges
+    ctx.strokeStyle = "gray";
+    edges.forEach(([a, b]) => {
+      const n1 = nodes[a];
+      const n2 = nodes[b];
+      ctx.beginPath();
+      ctx.moveTo(n1.x, n1.y);
+      ctx.lineTo(n2.x, n2.y);
+      ctx.stroke();
+    });
+
+    // Draw nodes
+    nodes.forEach(node => {
+      ctx.beginPath();
+      ctx.arc(node.x, node.y, 20, 0, 2 * Math.PI);
+      ctx.fillStyle = "lightblue";
+      ctx.fill();
+      ctx.stroke();
+
+      // Draw label
+      ctx.fillStyle = "black";
+      ctx.font = "14px sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(node.id, node.x, node.y);
+    });
+  }
+
+  drawGraph();
+</script>
+</body>
+</html>
